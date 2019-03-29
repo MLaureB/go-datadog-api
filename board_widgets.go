@@ -304,26 +304,34 @@ type WidgetRequest struct {
 	LogQuery     *WidgetApmOrLogQuery `json:"log_query,omitempty"`
 	ProcessQuery *WidgetProcessQuery  `json:"process_query,omitempty"`
 }
+
+// APM or Log Query
 type WidgetApmOrLogQuery struct {
-	Index   *string `json:"index"`
-	Compute *struct {
-		Aggregation *string `json:"aggregation"`
-		Facet       *string `json:"facet,omitempty"`
-		Interval    *int    `json:"interval,omitempty"`
-	} `json:"compute"`
-	Search *struct {
-		Query *string `json:"query"`
-	} `json:"search,omitempty"`
-	GroupBy []struct {
-		Facet *string `json:"facet"`
-		Limit *int    `json:"limit,omitempty"`
-		Sort  *struct {
-			Aggregation *string `json:"aggregation"`
-			Order       *string `json:"order"`
-			Facet       *string `json:"facet,omitempty"`
-		} `json:"sort,omitempty"`
-	} `json:"group_by,omitempty"`
+	Index   *string                `json:"index"`
+	Compute *ApmOrLogQueryCompute  `json:"compute"`
+	Search  *ApmOrLogQuerySearch   `json:"search,omitempty"`
+	GroupBy []ApmOrLogQueryGroupBy `json:"group_by,omitempty"`
 }
+type ApmOrLogQueryCompute struct {
+	Aggregation *string `json:"aggregation"`
+	Facet       *string `json:"facet,omitempty"`
+	Interval    *int    `json:"interval,omitempty"`
+}
+type ApmOrLogQuerySearch struct {
+	Query *string `json:"query"`
+}
+type ApmOrLogQueryGroupBy struct {
+	Facet *string                   `json:"facet"`
+	Limit *int                      `json:"limit,omitempty"`
+	Sort  *ApmOrLogQueryGroupBySort `json:"sort,omitempty"`
+}
+type ApmOrLogQueryGroupBySort struct {
+	Aggregation *string `json:"aggregation"`
+	Order       *string `json:"order"`
+	Facet       *string `json:"facet,omitempty"`
+}
+
+// Process Query
 type WidgetProcessQuery struct {
 	Metric   *string  `json:"metric"`
 	SearchBy *string  `json:"search_by,omitempty"`
