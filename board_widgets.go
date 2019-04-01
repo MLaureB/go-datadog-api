@@ -6,14 +6,27 @@ import (
 )
 
 const (
-	ALERT_GRAPH_WIDGET  = "alert_graph"
-	ALERT_VALUE_WIDGET  = "alert_value"
-	CHANGE_WIDGET       = "change"
-	CHECK_STATUS_WIDGET = "check_status"
-	DISTRIBUTION_WIDGET = "distribution"
-	GROUP_WIDGET        = "group"
-	NOTE_WIDGET         = "note"
-	TIMESERIES_WIDGET   = "timeseries"
+	ALERT_GRAPH_WIDGET    = "alert_graph"
+	ALERT_VALUE_WIDGET    = "alert_value"
+	CHANGE_WIDGET         = "change"
+	CHECK_STATUS_WIDGET   = "check_status"
+	DISTRIBUTION_WIDGET   = "distribution"
+	EVENT_STREAM_WIDGET   = "event_stream"
+	EVENT_TIMELINE_WIDGET = "event_timeline"
+	FREE_TEXT_WIDGET      = "free_text"
+	GROUP_WIDGET          = "group"
+	HEATMAP_WIDGET        = "heatmap"
+	HOSTMAP_WIDGET        = "hostmap"
+	IFRAME_WIDGET         = "iframe"
+	IMAGE_WIDGET          = "image"
+	LOG_STREAM_WIDGET     = "log_stream"
+	MANAGE_STATUS_WIDGET  = "manage_status"
+	NOTE_WIDGET           = "note"
+	QUERY_VALUE_WIDGET    = "query_value"
+	SCATTERPLOT_WIDGET    = "scatterplot"
+	TIMESERIES_WIDGET     = "timeseries"
+	TOPLIST_WIDGET        = "toplist"
+	TRACE_SERVICE_WIDGET  = "trace_service"
 )
 
 // BoardWidget represents the structure of any widget. However, the widget Definition structure is
@@ -44,12 +57,38 @@ func (widget *BoardWidget) GetWidgetType() (string, error) {
 		return CHECK_STATUS_WIDGET, nil
 	case DistributionDefinition:
 		return DISTRIBUTION_WIDGET, nil
+	case EventStreamDefinition:
+		return EVENT_STREAM_WIDGET, nil
+	case EventTimelineDefinition:
+		return EVENT_TIMELINE_WIDGET, nil
+	case FreeTextDefinition:
+		return FREE_TEXT_WIDGET, nil
 	case GroupDefinition:
 		return GROUP_WIDGET, nil
+	case HeatmapDefinition:
+		return HEATMAP_WIDGET, nil
+	case HostmapDefinition:
+		return HOSTMAP_WIDGET, nil
+	case IframeDefinition:
+		return IFRAME_WIDGET, nil
+	case ImageDefinition:
+		return IMAGE_WIDGET, nil
+	case LogStreamDefinition:
+		return LOG_STREAM_WIDGET, nil
+	case ManageStatusDefinition:
+		return MANAGE_STATUS_WIDGET, nil
 	case NoteDefinition:
 		return NOTE_WIDGET, nil
+	case QueryValueDefinition:
+		return QUERY_VALUE_WIDGET, nil
+	case ScatterplotDefinition:
+		return SCATTERPLOT_WIDGET, nil
 	case TimeseriesDefinition:
 		return TIMESERIES_WIDGET, nil
+	case ToplistDefinition:
+		return TOPLIST_WIDGET, nil
+	case TraceServiceDefinition:
+		return TRACE_SERVICE_WIDGET, nil
 	default:
 		return "", fmt.Errorf("Unsupported widget type")
 	}
@@ -88,13 +127,17 @@ type ChangeDefinition struct {
 	Time       *WidgetTime     `json:"time,omitempty"`
 }
 type ChangeRequest struct {
-	WidgetRequest
 	ChangeType   *string `json:"change_type,omitempty"`
 	CompareTo    *string `json:"compare_to,omitempty"`
 	IncreaseGood *bool   `json:"increase_good,omitempty"`
 	OrderBy      *string `json:"order_by,omitempty"`
 	OrderDir     *string `json:"order_dir,omitempty"`
 	ShowPresent  *bool   `json:"show_present,omitempty"`
+	// A ChangeRequest should implement exactly one of the following query types
+	MetricQuery  *string              `json:"q,omitempty"`
+	ApmQuery     *WidgetApmOrLogQuery `json:"apm_query,omitempty"`
+	LogQuery     *WidgetApmOrLogQuery `json:"log_query,omitempty"`
+	ProcessQuery *WidgetProcessQuery  `json:"process_query,omitempty"`
 }
 
 // CheckStatusDefinition represents the definition for a Check Status widget
@@ -121,8 +164,42 @@ type DistributionDefinition struct {
 	Time       *WidgetTime           `json:"time,omitempty"`
 }
 type DistributionRequest struct {
-	WidgetRequest
 	Style *WidgetRequestStyle `json:"style,omitempty"`
+	// A DistributionRequest should implement exactly one of the following query types
+	MetricQuery  *string              `json:"q,omitempty"`
+	ApmQuery     *WidgetApmOrLogQuery `json:"apm_query,omitempty"`
+	LogQuery     *WidgetApmOrLogQuery `json:"log_query,omitempty"`
+	ProcessQuery *WidgetProcessQuery  `json:"process_query,omitempty"`
+}
+
+// EventStreamDefinition represents the definition for an Event Stream widget
+type EventStreamDefinition struct {
+	Type       *string     `json:"type"`
+	Query      *string     `json:"query"`
+	EventSize  *string     `json:"event_size,omitempty"`
+	Title      *string     `json:"title,omitempty"`
+	TitleSize  *string     `json:"title_size,omitempty"`
+	TitleAlign *string     `json:"title_align,omitempty"`
+	Time       *WidgetTime `json:"time,omitempty"`
+}
+
+// EventTimelineDefinition represents the definition for an Event Timeline widget
+type EventTimelineDefinition struct {
+	Type       *string     `json:"type"`
+	Query      *string     `json:"query"`
+	Title      *string     `json:"title,omitempty"`
+	TitleSize  *string     `json:"title_size,omitempty"`
+	TitleAlign *string     `json:"title_align,omitempty"`
+	Time       *WidgetTime `json:"time,omitempty"`
+}
+
+// FreeTextDefinition represents the definition for a Free Text widget
+type FreeTextDefinition struct {
+	Type      *string `json:"type"`
+	Text      *string `json:"text"`
+	Color     *string `json:"color,omitempty"`
+	FontSize  *string `json:"font_size,omitempty"`
+	TextAlign *string `json:"text_align,omitempty"`
 }
 
 // GroupDefinition represents the definition for an Group widget
@@ -131,6 +208,99 @@ type GroupDefinition struct {
 	LayoutType *string       `json:"layout_type"`
 	Widgets    []BoardWidget `json:"widgets"`
 	Title      *string       `json:"title,omitempty"`
+}
+
+// HeatmapDefinition represents the definition for a Heatmap widget
+type HeatmapDefinition struct {
+	Type       *string          `json:"type"`
+	Requests   []HeatmapRequest `json:"requests"`
+	Yaxis      *WidgetAxis      `json:"yaxis,omitempty"`
+	Events     []WidgetEvent    `json:"events,omitempty"`
+	Title      *string          `json:"title,omitempty"`
+	TitleSize  *string          `json:"title_size,omitempty"`
+	TitleAlign *string          `json:"title_align,omitempty"`
+	Time       *WidgetTime      `json:"time,omitempty"`
+}
+type HeatmapRequest struct {
+	Style *WidgetRequestStyle `json:"style,omitempty"`
+	// A HeatmapRequest should implement exactly one of the following query types
+	MetricQuery  *string              `json:"q,omitempty"`
+	ApmQuery     *WidgetApmOrLogQuery `json:"apm_query,omitempty"`
+	LogQuery     *WidgetApmOrLogQuery `json:"log_query,omitempty"`
+	ProcessQuery *WidgetProcessQuery  `json:"process_query,omitempty"`
+}
+
+// HostmapDefinition represents the definition for a Heatmap widget
+type HostmapDefinition struct {
+	Type          *string          `json:"type"`
+	Requests      *HostmapRequests `json:"requests"`
+	NodeType      *string          `json:"node_type,omitempty"`
+	NoMetricHosts *bool            `json:"no_metric_hosts,omitempty"`
+	NoGroupHosts  *bool            `json:"no_group_hosts,omitempty"`
+	Group         []string         `json:"group,omitempty"`
+	Scope         []string         `json:"scope,omitempty"`
+	Style         *HostmapStyle    `json:"style,omitempty"`
+	Title         *string          `json:"title,omitempty"`
+	TitleSize     *string          `json:"title_size,omitempty"`
+	TitleAlign    *string          `json:"title_align,omitempty"`
+}
+type HostmapRequests struct {
+	Fill *HostmapRequest `json:"fill,omitempty"`
+	Size *HostmapRequest `json:"size,omitempty"`
+}
+type HostmapRequest struct {
+	// A HostmapRequest should implement exactly one of the following query types
+	MetricQuery  *string              `json:"q,omitempty"`
+	ApmQuery     *WidgetApmOrLogQuery `json:"apm_query,omitempty"`
+	LogQuery     *WidgetApmOrLogQuery `json:"log_query,omitempty"`
+	ProcessQuery *WidgetProcessQuery  `json:"process_query,omitempty"`
+}
+type HostmapStyle struct {
+	Palette     *string `json:"palette,omitempty"`
+	PaletteFlip *bool   `json:"palette_flip,omitempty"`
+	FillMin     *string `json:"fill_min,omitempty"`
+	FillMax     *string `json:"fill_max,omitempty"`
+}
+
+// IframeDefinition represents the definition for an Iframe widget
+type IframeDefinition struct {
+	Type *string `json:"type"`
+	Url  *string `json:"url"`
+}
+
+// ImageDefinition represents the definition for an Image widget
+type ImageDefinition struct {
+	Type   *string `json:"type"`
+	Url    *string `json:"url"`
+	Sizing *string `json:"sizing,omitempty"`
+	Margin *string `json:"margin,omitempty"`
+}
+
+// LogStreamDefinition represents the definition for a Log Stream widget
+type LogStreamDefinition struct {
+	Type       *string     `json:"type"`
+	Logset     *string     `json:"logset"`
+	Query      *string     `json:"query,omitempty"`
+	Columns    []string    `json:"columns,omitempty"`
+	Title      *string     `json:"title,omitempty"`
+	TitleSize  *string     `json:"title_size,omitempty"`
+	TitleAlign *string     `json:"title_align,omitempty"`
+	Time       *WidgetTime `json:"time,omitempty"`
+}
+
+// ManageStatusDefinition represents the definition for a Manage Status widget
+type ManageStatusDefinition struct {
+	Type            *string `json:"type"`
+	Query           *string `json:"query"`
+	Sort            *string `json:"sort,omitempty"`
+	Count           *int    `json:"count,omitempty"`
+	Start           *int    `json:"start,omitempty"`
+	DisplayFormat   *string `json:"display_format,omitempty"`
+	ColorPreference *string `json:"color_preference,omitempty"`
+	HideZeroCounts  *bool   `json:"hide_zero_counts,omitempty"`
+	Title           *string `json:"title,omitempty"`
+	TitleSize       *string `json:"title_size,omitempty"`
+	TitleAlign      *string `json:"title_align,omitempty"`
 }
 
 // NoteDefinition represents the definition for a Note widget
@@ -143,6 +313,54 @@ type NoteDefinition struct {
 	ShowTick        *bool   `json:"show_tick,omitempty"`
 	TickPos         *string `json:"tick_pos,omitempty"`
 	TickEdge        *string `json:"tick_edge,omitempty"`
+}
+
+// QueryValueDefinition represents the definition for a Query Value widget
+type QueryValueDefinition struct {
+	Type       *string             `json:"type"`
+	Requests   []QueryValueRequest `json:"requests"`
+	Autoscale  *bool               `json:"autoscale,omitempty"`
+	CustomUnit *string             `json:"custom_unit,omitempty"`
+	Precision  *int                `json:"precision,omitempty"`
+	TextAlign  *string             `json:"text_align,omitempty"`
+	Title      *string             `json:"title,omitempty"`
+	TitleSize  *string             `json:"title_size,omitempty"`
+	TitleAlign *string             `json:"title_align,omitempty"`
+	Time       *WidgetTime         `json:"time,omitempty"`
+}
+type QueryValueRequest struct {
+	ConditionalFormats []WidgetConditionalFormat `json:"conditional_formats,omitempty"`
+	Aggregator         *string                   `json:"aggregator,omitempty"`
+	// A QueryValueRequest should implement exactly one of the following query types
+	MetricQuery  *string              `json:"q,omitempty"`
+	ApmQuery     *WidgetApmOrLogQuery `json:"apm_query,omitempty"`
+	LogQuery     *WidgetApmOrLogQuery `json:"log_query,omitempty"`
+	ProcessQuery *WidgetProcessQuery  `json:"process_query,omitempty"`
+}
+
+// ScatterplotDefinition represents the definition for a Heatmap widget
+type ScatterplotDefinition struct {
+	Type          *string              `json:"type"`
+	Requests      *ScatterplotRequests `json:"requests"`
+	Xaxis         *WidgetAxis          `json:"xaxis,omitempty"`
+	Yaxis         *WidgetAxis          `json:"yaxis,omitempty"`
+	ColorByGroups []string             `json:"color_by_groups,omitempty"`
+	Title         *string              `json:"title,omitempty"`
+	TitleSize     *string              `json:"title_size,omitempty"`
+	TitleAlign    *string              `json:"title_align,omitempty"`
+	Time          *WidgetTime          `json:"time,omitempty"`
+}
+type ScatterplotRequests struct {
+	X *ScatterplotRequest `json:"x"`
+	Y *ScatterplotRequest `json:"y"`
+}
+type ScatterplotRequest struct {
+	Aggregator *string `json:"aggregator,omitempty"`
+	// A ScatterplotRequest should implement exactly one of the following query types
+	MetricQuery  *string              `json:"q,omitempty"`
+	ApmQuery     *WidgetApmOrLogQuery `json:"apm_query,omitempty"`
+	LogQuery     *WidgetApmOrLogQuery `json:"log_query,omitempty"`
+	ProcessQuery *WidgetProcessQuery  `json:"process_query,omitempty"`
 }
 
 // TimeseriesDefinition represents the definition for a Timeseries widget
@@ -160,15 +378,58 @@ type TimeseriesDefinition struct {
 	Time       *WidgetTime         `json:"time,omitempty"`
 }
 type TimeseriesRequest struct {
-	WidgetRequest
 	Style       *TimeseriesRequestStyle `json:"style,omitempty"`
 	Metadata    []WidgetMetadata        `json:"metadata,omitempty"`
 	DisplayType *string                 `json:"display_type,omitempty"`
+	// A TimeseriesRequest should implement exactly one of the following query types
+	MetricQuery  *string              `json:"q,omitempty"`
+	ApmQuery     *WidgetApmOrLogQuery `json:"apm_query,omitempty"`
+	LogQuery     *WidgetApmOrLogQuery `json:"log_query,omitempty"`
+	ProcessQuery *WidgetProcessQuery  `json:"process_query,omitempty"`
 }
 type TimeseriesRequestStyle struct {
-	WidgetRequestStyle
+	Palette   *string `json:"palette,omitempty"`
 	LineType  *string `json:"line_type,omitempty"`
 	LineWidth *string `json:"line_width,omitempty"`
+}
+
+// ToplistDefinition represents the definition for a Distribution widget
+type ToplistDefinition struct {
+	Type       *string          `json:"type"`
+	Requests   []ToplistRequest `json:"requests"`
+	Title      *string          `json:"title,omitempty"`
+	TitleSize  *string          `json:"title_size,omitempty"`
+	TitleAlign *string          `json:"title_align,omitempty"`
+	Time       *WidgetTime      `json:"time,omitempty"`
+}
+type ToplistRequest struct {
+	ConditionalFormats []WidgetConditionalFormat `json:"conditional_formats,omitempty"`
+	Style              *WidgetRequestStyle       `json:"style,omitempty"`
+	// A ToplistRequest should implement exactly one of the following query types
+	MetricQuery  *string              `json:"q,omitempty"`
+	ApmQuery     *WidgetApmOrLogQuery `json:"apm_query,omitempty"`
+	LogQuery     *WidgetApmOrLogQuery `json:"log_query,omitempty"`
+	ProcessQuery *WidgetProcessQuery  `json:"process_query,omitempty"`
+}
+
+// TraceServiceDefinition represents the definition for a Trace Service widget
+type TraceServiceDefinition struct {
+	Type             *string     `json:"type"`
+	Env              *string     `json:"env"`
+	Service          *string     `json:"service"`
+	SpanName         *string     `json:"span_name"`
+	ShowHits         *bool       `json:"show_hits,omitempty"`
+	ShowErrors       *bool       `json:"show_errors,omitempty"`
+	ShowLatency      *bool       `json:"show_latency,omitempty"`
+	ShowBreakdown    *bool       `json:"show_breakdown,omitempty"`
+	ShowDistribution *bool       `json:"show_distribution,omitempty"`
+	ShowResourceList *bool       `json:"show_resource_list,omitempty"`
+	SizeFormat       *string     `json:"size_format,omitempty"`
+	DisplayFormat    *string     `json:"display_format,omitempty"`
+	Title            *string     `json:"title,omitempty"`
+	TitleSize        *string     `json:"title_size,omitempty"`
+	TitleAlign       *string     `json:"title_align,omitempty"`
+	Time             *WidgetTime `json:"time,omitempty"`
 }
 
 // UnmarshalJSON is a Custom Unmarshal for BoardWidget. If first tries to unmarshal the data in a light
@@ -234,6 +495,30 @@ func (widget *BoardWidget) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		widget.Definition = distributionWidget.Definition
+	case EVENT_STREAM_WIDGET:
+		var eventStreamWidget struct {
+			Definition EventStreamDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &eventStreamWidget); err != nil {
+			return err
+		}
+		widget.Definition = eventStreamWidget.Definition
+	case EVENT_TIMELINE_WIDGET:
+		var eventTimelineWidget struct {
+			Definition EventTimelineDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &eventTimelineWidget); err != nil {
+			return err
+		}
+		widget.Definition = eventTimelineWidget.Definition
+	case FREE_TEXT_WIDGET:
+		var freeTextWidget struct {
+			Definition FreeTextDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &freeTextWidget); err != nil {
+			return err
+		}
+		widget.Definition = freeTextWidget.Definition
 	case GROUP_WIDGET:
 		var groupWidget struct {
 			Definition GroupDefinition `json:"definition"`
@@ -242,6 +527,54 @@ func (widget *BoardWidget) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		widget.Definition = groupWidget.Definition
+	case HEATMAP_WIDGET:
+		var heatmapWidget struct {
+			Definition HeatmapDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &heatmapWidget); err != nil {
+			return err
+		}
+		widget.Definition = heatmapWidget.Definition
+	case HOSTMAP_WIDGET:
+		var hostmapWidget struct {
+			Definition HostmapDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &hostmapWidget); err != nil {
+			return err
+		}
+		widget.Definition = hostmapWidget.Definition
+	case IFRAME_WIDGET:
+		var iframeWidget struct {
+			Definition IframeDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &iframeWidget); err != nil {
+			return err
+		}
+		widget.Definition = iframeWidget.Definition
+	case IMAGE_WIDGET:
+		var imageWidget struct {
+			Definition ImageDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &imageWidget); err != nil {
+			return err
+		}
+		widget.Definition = imageWidget.Definition
+	case LOG_STREAM_WIDGET:
+		var logStreamWidget struct {
+			Definition LogStreamDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &logStreamWidget); err != nil {
+			return err
+		}
+		widget.Definition = logStreamWidget.Definition
+	case MANAGE_STATUS_WIDGET:
+		var manageStatusWidget struct {
+			Definition ManageStatusDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &manageStatusWidget); err != nil {
+			return err
+		}
+		widget.Definition = manageStatusWidget.Definition
 	case NOTE_WIDGET:
 		var noteWidget struct {
 			Definition NoteDefinition `json:"definition"`
@@ -250,6 +583,22 @@ func (widget *BoardWidget) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		widget.Definition = noteWidget.Definition
+	case QUERY_VALUE_WIDGET:
+		var queryValueWidget struct {
+			Definition QueryValueDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &queryValueWidget); err != nil {
+			return err
+		}
+		widget.Definition = queryValueWidget.Definition
+	case SCATTERPLOT_WIDGET:
+		var scatterplotWidget struct {
+			Definition ScatterplotDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &scatterplotWidget); err != nil {
+			return err
+		}
+		widget.Definition = scatterplotWidget.Definition
 	case TIMESERIES_WIDGET:
 		var timeseriesWidget struct {
 			Definition TimeseriesDefinition `json:"definition"`
@@ -258,6 +607,22 @@ func (widget *BoardWidget) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		widget.Definition = timeseriesWidget.Definition
+	case TOPLIST_WIDGET:
+		var toplistWidget struct {
+			Definition ToplistDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &toplistWidget); err != nil {
+			return err
+		}
+		widget.Definition = toplistWidget.Definition
+	case TRACE_SERVICE_WIDGET:
+		var traceServiceWidget struct {
+			Definition TraceServiceDefinition `json:"definition"`
+		}
+		if err := json.Unmarshal(data, &traceServiceWidget); err != nil {
+			return err
+		}
+		widget.Definition = traceServiceWidget.Definition
 	default:
 		return fmt.Errorf("Cannot unmarshal widget of type: %s", *widgetHandler.Definition.Type)
 	}
@@ -296,16 +661,18 @@ type WidgetMetadata struct {
 	AliasName  *string `json:"alias_name,omitempty"`
 }
 
-// WidgetRequest represents a request to display on the widget.
-// One request object should implement only one type of query.
-type WidgetRequest struct {
-	MetricQuery  *string              `json:"q,omitempty"`
-	ApmQuery     *WidgetApmOrLogQuery `json:"apm_query,omitempty"`
-	LogQuery     *WidgetApmOrLogQuery `json:"log_query,omitempty"`
-	ProcessQuery *WidgetProcessQuery  `json:"process_query,omitempty"`
+type WidgetConditionalFormat struct {
+	Comparator    *string  `json:"comparator"`
+	Value         *float64 `json:"value"`
+	Palette       *string  `json:"palette"`
+	CustomBgColor *string  `json:"custom_bg_color,omitempty"`
+	CustomFgColor *string  `json:"custom_fg_color,omitempty"`
+	ImageUrl      *string  `json:"image_url,omitempty"`
+	HideValue     *bool    `json:"hide_value,omitempty"`
+	Timeframe     *string  `json:"timeframe,omitempty"`
 }
 
-// APM or Log Query
+// WidgetApmOrLogQuery represents an APM or a Log query
 type WidgetApmOrLogQuery struct {
 	Index   *string                `json:"index"`
 	Compute *ApmOrLogQueryCompute  `json:"compute"`
@@ -331,7 +698,7 @@ type ApmOrLogQueryGroupBySort struct {
 	Facet       *string `json:"facet,omitempty"`
 }
 
-// Process Query
+// WidgetProcessQuery represents a Process query
 type WidgetProcessQuery struct {
 	Metric   *string  `json:"metric"`
 	SearchBy *string  `json:"search_by,omitempty"`

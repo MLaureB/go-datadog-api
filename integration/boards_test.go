@@ -57,7 +57,10 @@ func createAlertGraph() datadog.BoardWidget {
 }
 
 func createGroupWidget() datadog.BoardWidget {
-	widgets := []datadog.BoardWidget{createTimeseriesWidget()}
+	widgets := []datadog.BoardWidget{
+		createTimeseriesWidget(),
+		createAlertGraph(),
+	}
 	return datadog.BoardWidget{
 		Definition: &datadog.GroupDefinition{
 			Type:       datadog.String("group"),
@@ -70,9 +73,7 @@ func createGroupWidget() datadog.BoardWidget {
 
 func createTimeseriesWidget() datadog.BoardWidget {
 	request := datadog.TimeseriesRequest{
-		WidgetRequest: datadog.WidgetRequest{
-			MetricQuery: datadog.String("avg:system.cpu.user{*}"),
-		},
+		MetricQuery: datadog.String("avg:system.cpu.user{*}"),
 		Style: &datadog.TimeseriesRequestStyle{
 			LineType: datadog.String("dotted"),
 		},
